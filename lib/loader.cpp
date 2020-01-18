@@ -5,6 +5,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 
 #include "loader.h"
 
@@ -16,27 +17,33 @@ DragonLoader::DragonLoader() : mm(new SectionMemoryManager), mArch("") {
 	InitializeNativeTargetAsmPrinter();
 }
 
-DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath) {
-	SMDiagnostic err;
-	module = parseIRFile(filePath, err, this->context);
+void DragonLoader::close() {
+	ee->runStaticConstructorsDestructors(true);
+}
+
+DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, raw_ostream& os) {
+	SMDiagnostic parseErr;
+	std::unique_ptr<llvm::Module> module = parseIRFile(filePath, parseErr, this->context);
 	if (module == nullptr) {
-		err.print("dragon loader", errs());
+		parseErr.print("dragon loader", os);
 		return nullptr;
 	}
+	std::string buildErr;
+	ee = EngineBuilder (std::move(module)).setErrorStr(&buildErr).setEngineKind(EngineKind::JIT).create();
+	if (ee == nullptr) {
+		os << buildErr;
+		return nullptr;
+	}
+	ee->finalizeObject();
+	ee->runStaticConstructorsDestructors(false);
 	return this;
 }
 
-uint64_t DragonLoader::getNamedFunction(const char *name) {
-	std::string errMsg;
-	ee = EngineBuilder (std::move(module))
-			.setMArch("")
-			.setMCPU(sys::getHostCPUName())
-			.setMCJITMemoryManager(std::move(mm))
-			.setErrorStr(&errMsg).create();
-	if (ee == nullptr) {
-		errs() << errMsg << "\n";
-		return 0;
-	}
-	uint64_t address = ee->getFunctionAddress(name);
+DragonLoader* DragonLoader::registeMethod(const char *methodName) {
+	// build cache
+}
+
+void *DragonLoader::getNamedFunction(const char *name) {
+	void *address = ee->getPointerToNamedFunction(name);
 	return address;
 }

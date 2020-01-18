@@ -18,7 +18,7 @@
 
 using namespace llvm;
 
-typedef int (*AddFuncType)(int, int);
+using AddFuncType = int (*)(int, int);
 
 static const char *addFuncCode =
 		"; ModuleID = 'AddFunc.bc'\n"
@@ -75,14 +75,16 @@ TEST(ParserTest, Test1) {
 	ee->runStaticConstructorsDestructors(true);
 }
 
-TEST(Hello, Test2) {
+TEST(loader, Test2) {
 	const char *fileName = "/tmp/AddFunc.ll";
 	std::ofstream tmpFile;
 	tmpFile.open(fileName);
 	tmpFile << addFuncCode;
 	tmpFile.close();
 	DragonLoader loader;
-	loader.loadBitcodeFile(fileName);
-	int (*addFunc)(int, int) = (int(*)(int, int))loader.getNamedFunction("addFunc");
+	std::string errInfo;
+	raw_string_ostream os(errInfo);
+	loader.loadBitcodeFile(fileName, os);
+	AddFuncType addFunc = (AddFuncType) loader.getNamedFunction("addFunc");
 	EXPECT_EQ(3, addFunc(1, 2));
 }

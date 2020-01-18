@@ -14,7 +14,6 @@
 class DragonLoader {
 private:
 	llvm::LLVMContext context;
-	std::unique_ptr<llvm::Module> module;
 	std::unique_ptr<llvm::RTDyldMemoryManager> mm;
 	llvm::ExecutionEngine *ee = nullptr;
 	llvm::StringRef mArch;
@@ -22,9 +21,13 @@ private:
 public:
 	DragonLoader();
 
-	DragonLoader *loadBitcodeFile(const char *);
+	void close();
 
-	uint64_t getNamedFunction(const char *);
+	DragonLoader *loadBitcodeFile(const char *, llvm::raw_ostream&);
+
+	DragonLoader *registeMethod(const char *);
+
+	void *getNamedFunction(const char *);
 };
 
 #endif //DRAGONLOADER_LOADER_H
