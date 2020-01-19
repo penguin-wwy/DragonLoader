@@ -23,11 +23,16 @@ public:
 
 	void close();
 
+	DragonLoader *loadSourceFile(const char *, llvm::raw_ostream&);
+
 	DragonLoader *loadBitcodeFile(const char *, llvm::raw_ostream&);
 
 	DragonLoader *registeMethod(const char *);
 
 	void *getNamedFunction(const char *);
+
+private:
+	bool createExecutionEngin(std::unique_ptr<llvm::Module>, llvm::raw_ostream &);
 };
 
 #endif //DRAGONLOADER_LOADER_H

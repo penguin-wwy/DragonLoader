@@ -3,7 +3,10 @@ project(DragonLoader)
 
 set(CMAKE_CXX_STANDARD 11)
 
+find_package(Clang REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
+
+include_directories(${CLANG_INCLUDE_DIRS})
 
 include_directories(${LLVM_INCLUDE_DIRS})
 llvm_map_components_to_libnames(llvm_libs x86disassembler x86asmparser x86codegen globalisel
