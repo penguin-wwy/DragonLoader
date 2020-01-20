@@ -7,6 +7,8 @@ find_package(Clang REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
 
 include_directories(${CLANG_INCLUDE_DIRS})
+link_directories(${CLANG_INSTALL_PREFIX}/lib)
+message(${CLANG_INSTALL_PREFIX}/lib)
 
 include_directories(${LLVM_INCLUDE_DIRS})
 llvm_map_components_to_libnames(llvm_libs x86disassembler x86asmparser x86codegen globalisel
@@ -21,7 +23,19 @@ llvm_map_components_to_libnames(llvm_libs x86disassembler x86asmparser x86codege
 include_directories(include)
 file(GLOB SRC_FILES lib/*.cpp)
 add_library(DragonLoader ${SRC_FILES})
-target_link_libraries(DragonLoader ${llvm_libs})
+target_link_libraries(DragonLoader ${llvm_libs}
+        clangFrontend
+        clangSerialization
+        clangDriver
+        clangParse
+        clangSema
+        clangAnalysis
+        clangAST
+        clangBasic
+        clangEdit
+        clangLex
+        clangTooling
+        clangCodeGen)
 
 add_subdirectory(unittests/googletest)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})

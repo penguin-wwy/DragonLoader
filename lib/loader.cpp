@@ -20,6 +20,33 @@
 using namespace llvm;
 using namespace clang;
 
+struct CompilerEngin {
+	std::unique_ptr<CompilerInstance> compiler;
+	IntrusiveRefCntPtr<DiagnosticIDs> diagID;
+	IntrusiveRefCntPtr<DiagnosticOptions> diagOpt;
+	TextDiagnosticBuffer *diagBuffer;
+	DiagnosticsEngine diagEngine;
+
+	CompilerEngin() : compiler(new CompilerInstance()), diagID(new DiagnosticIDs()),
+					  diagOpt(new DiagnosticOptions()), diagBuffer(new TextDiagnosticBuffer()),
+					  diagEngine(diagID, &*diagOpt, diagBuffer) {
+	}
+
+	std::unique_ptr<llvm::Module> compileModule(ArrayRef<const char *> &args, LLVMContext *context, raw_ostream &os) {
+		CompilerInvocation::CreateFromArgs(compiler->getInvocation(), args.begin(), args.end(), diagEngine);
+		compiler->createDiagnostics();
+		if (!compiler->hasDiagnostics()) {
+			os << "create diagnostics error.";
+		}
+		std::unique_ptr<CodeGenAction> action(make_unique<EmitBCAction>(context));
+		if (!compiler->ExecuteAction(*action)) {
+			os << "emit bc error.";
+			return nullptr;
+		}
+		return std::move(action->takeModule());
+	}
+};
+
 DragonLoader::DragonLoader() : mm(new SectionMemoryManager), mArch("") {
 	InitializeNativeTarget();
 	InitializeNativeTargetAsmParser();
@@ -43,32 +70,18 @@ bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, ra
 }
 
 DragonLoader* DragonLoader::loadSourceFile(const char *filePath, raw_ostream& os) {
-	std::vector<const char *> args;
+	if (compiler == nullptr) {
+		compiler = new CompilerEngin();
+	}
 
-	ErrorOr<std::string> clangPath = sys::findProgramByName("clang");
-	if (!clangPath) {
-		os << clangPath.getError().message();
+	std::vector<const char *> args;
+	args.push_back(filePath);
+	ArrayRef<const char *> argList(args);
+	std::unique_ptr<llvm::Module> module = compiler->compileModule(argList, &context, os);
+	if (module == nullptr) {
 		return nullptr;
 	}
-	args.push_back((*clangPath).c_str());
-	ArrayRef<const char *> argList(args);
-
-	IntrusiveRefCntPtr<DiagnosticIDs> diagID(new DiagnosticIDs());
-	IntrusiveRefCntPtr<DiagnosticOptions> diagOpt = new DiagnosticOptions();
-	auto *diagBuffer = new TextDiagnosticBuffer();
-	DiagnosticsEngine diags(diagID, &*diagOpt, diagBuffer);
-	std::unique_ptr<CompilerInstance> clang(new CompilerInstance());
-	CompilerInvocation::CreateFromArgs(clang->getInvocation(), argList.begin(), argList.end(), diags);
-
-	clang->createDiagnostics();
-	if (!clang->hasDiagnostics()) {
-		os << "create diagnostics error.";
-	}
-	std::unique_ptr<CodeGenAction> action(make_unique<EmitBCAction>());
-	if (!clang->ExecuteAction(*action)) {
-		os << "emit bc error.";
-	}
-	return createExecutionEngin(std::move(action->takeModule()), os) ? this : nullptr;
+	return createExecutionEngin(std::move(module), os) ? this : nullptr;
 }
 
 DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, raw_ostream& os) {

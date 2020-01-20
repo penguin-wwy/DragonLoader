@@ -11,11 +11,13 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 
+class CompilerEngin;
 class DragonLoader {
 private:
 	llvm::LLVMContext context;
 	std::unique_ptr<llvm::RTDyldMemoryManager> mm;
 	llvm::ExecutionEngine *ee = nullptr;
+	CompilerEngin *compiler = nullptr;
 	llvm::StringRef mArch;
 
 public:

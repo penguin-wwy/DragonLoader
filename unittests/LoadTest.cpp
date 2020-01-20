@@ -67,7 +67,7 @@ TEST(ParserTest, Test1) {
 
 	ee->finalizeObject();
 	ee->runStaticConstructorsDestructors(false);
-	AddFuncType addFunc = (AddFuncType) ee->getPointerToNamedFunction("addFunc");
+	AddFuncType addFunc = reinterpret_cast<AddFuncType>(ee->getPointerToNamedFunction("addFunc"));
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(0, addFunc(0, 0));
 	EXPECT_EQ(10, addFunc(1, 9));
@@ -85,6 +85,26 @@ TEST(loader, Test2) {
 	std::string errInfo;
 	raw_string_ostream os(errInfo);
 	loader.loadBitcodeFile(fileName, os);
-	AddFuncType addFunc = (AddFuncType) loader.getNamedFunction("addFunc");
+	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedFunction("addFunc"));
+	EXPECT_EQ(3, addFunc(1, 2));
+}
+
+static const char *addFuncSource =
+		"int addFunc(int a, int b) {\n"
+		"	return a + b;\n"
+		"}\n";
+
+TEST(sourceLoader, Test3) {
+	const char *fileName = "/tmp/AddFunc.c";
+	std::ofstream tmpFile;
+	tmpFile.open(fileName);
+	tmpFile << addFuncSource;
+	tmpFile.close();
+	DragonLoader loader;
+	std::string errInfo;
+	raw_string_ostream os(errInfo);
+	loader.loadSourceFile(fileName, os);
+	AddFuncType addFunc = reinterpret_cast<AddFuncType >(loader.getNamedFunction("addFunc"));
+	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));
 }
