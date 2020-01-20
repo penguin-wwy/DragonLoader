@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(DragonLoader)
 
+set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_subdirectory(example)
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Clang REQUIRED)
@@ -20,9 +24,9 @@ llvm_map_components_to_libnames(llvm_libs x86disassembler x86asmparser x86codege
         hexagoncodegen lanaicodegen mipscodegen msp430codegen nvptxcodegen powerpccodegen
         sparccodegen systemzcodegen webassemblycodegen xcorecodegen)
 
-include_directories(include)
+include_directories(${PROJECT_ROOT_DIR}/include)
 file(GLOB SRC_FILES lib/*.cpp)
-add_library(DragonLoader ${SRC_FILES})
+add_library(DragonLoader SHARED ${SRC_FILES})
 target_link_libraries(DragonLoader ${llvm_libs}
         clangFrontend
         clangSerialization
@@ -42,4 +46,4 @@ include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 file(GLOB TEST_FILES unittests/*.cpp)
 add_executable(unittest ${TEST_FILES} ${SRC_FILES})
-target_link_libraries(unittest gtest gtest_main DragonLoader ${llvm_libs})
+target_link_libraries(unittest gtest gtest_main DragonLoader)
