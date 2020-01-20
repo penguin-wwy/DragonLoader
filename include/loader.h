@@ -5,29 +5,29 @@
 #ifndef DRAGONLOADER_LOADER_H
 #define DRAGONLOADER_LOADER_H
 
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
+#include <bits/unique_ptr.h>
 
+namespace llvm {
+	class LLVMContext;
+	class Module;
+	class ExecutionEngine;
+	class raw_ostream;
+}
 class CompilerEngin;
 class DragonLoader {
 private:
-	llvm::LLVMContext context;
-	std::unique_ptr<llvm::RTDyldMemoryManager> mm;
+	llvm::LLVMContext *context = nullptr;
 	llvm::ExecutionEngine *ee = nullptr;
 	CompilerEngin *compiler = nullptr;
-	llvm::StringRef mArch;
 
 public:
 	DragonLoader();
 
 	void close();
 
-	DragonLoader *loadSourceFile(const char *, llvm::raw_ostream&);
+	DragonLoader *loadSourceFile(const char *, std::string &);
 
-	DragonLoader *loadBitcodeFile(const char *, llvm::raw_ostream&);
+	DragonLoader *loadBitcodeFile(const char *, std::string &);
 
 	DragonLoader *registeMethod(const char *);
 

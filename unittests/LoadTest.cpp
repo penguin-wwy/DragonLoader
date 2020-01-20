@@ -83,8 +83,7 @@ TEST(loader, Test2) {
 	tmpFile.close();
 	DragonLoader loader;
 	std::string errInfo;
-	raw_string_ostream os(errInfo);
-	loader.loadBitcodeFile(fileName, os);
+	loader.loadBitcodeFile(fileName, errInfo);
 	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedFunction("addFunc"));
 	EXPECT_EQ(3, addFunc(1, 2));
 }
@@ -102,8 +101,7 @@ TEST(sourceLoader, Test3) {
 	tmpFile.close();
 	DragonLoader loader;
 	std::string errInfo;
-	raw_string_ostream os(errInfo);
-	loader.loadSourceFile(fileName, os);
+	loader.loadSourceFile(fileName, errInfo);
 	AddFuncType addFunc = reinterpret_cast<AddFuncType >(loader.getNamedFunction("addFunc"));
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));

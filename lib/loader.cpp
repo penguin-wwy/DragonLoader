@@ -13,7 +13,6 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
-#include "clang/Driver/Driver.h"
 
 #include "loader.h"
 
@@ -47,7 +46,7 @@ struct CompilerEngin {
 	}
 };
 
-DragonLoader::DragonLoader() : mm(new SectionMemoryManager), mArch("") {
+DragonLoader::DragonLoader() : context(new LLVMContext()) {
 	InitializeNativeTarget();
 	InitializeNativeTargetAsmParser();
 	InitializeNativeTargetAsmPrinter();
@@ -69,7 +68,8 @@ bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, ra
 	return true;
 }
 
-DragonLoader* DragonLoader::loadSourceFile(const char *filePath, raw_ostream& os) {
+DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::string &err) {
+	raw_string_ostream os(err);
 	if (compiler == nullptr) {
 		compiler = new CompilerEngin();
 	}
@@ -77,16 +77,17 @@ DragonLoader* DragonLoader::loadSourceFile(const char *filePath, raw_ostream& os
 	std::vector<const char *> args;
 	args.push_back(filePath);
 	ArrayRef<const char *> argList(args);
-	std::unique_ptr<llvm::Module> module = compiler->compileModule(argList, &context, os);
+	std::unique_ptr<llvm::Module> module = compiler->compileModule(argList, context, os);
 	if (module == nullptr) {
 		return nullptr;
 	}
 	return createExecutionEngin(std::move(module), os) ? this : nullptr;
 }
 
-DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, raw_ostream& os) {
+DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, std::string &err) {
+	raw_string_ostream os(err);
 	SMDiagnostic parseErr;
-	std::unique_ptr<llvm::Module> module = parseIRFile(filePath, parseErr, this->context);
+	std::unique_ptr<llvm::Module> module = parseIRFile(filePath, parseErr, *context);
 	if (module == nullptr) {
 		parseErr.print("dragon loader", os);
 		return nullptr;
