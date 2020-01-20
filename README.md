@@ -1,6 +1,6 @@
 # DragonLoader
 
-C/CPP source code loader.
+C/CPP source code dynamic loader.
 
 The goal is to dynamically load source code and call functions like Jvm ClassLoader.
 Achieving this with LLVM Jit.
