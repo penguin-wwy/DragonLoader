@@ -6,6 +6,7 @@
 #define DRAGONLOADER_LOADER_H
 
 #include <bits/unique_ptr.h>
+#include <unordered_map>
 
 namespace llvm {
 	class LLVMContext;
@@ -19,6 +20,8 @@ private:
 	llvm::LLVMContext *context = nullptr;
 	llvm::ExecutionEngine *ee = nullptr;
 	CompilerEngin *compiler = nullptr;
+
+	std::unordered_map<std::string, void *> address;
 
 public:
 	DragonLoader();

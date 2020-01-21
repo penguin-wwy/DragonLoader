@@ -37,7 +37,7 @@ struct CompilerEngin {
 		if (!compiler->hasDiagnostics()) {
 			os << "create diagnostics error.";
 		}
-		std::unique_ptr<CodeGenAction> action(make_unique<EmitBCAction>(context));
+		std::unique_ptr<CodeGenAction> action(make_unique<EmitLLVMOnlyAction>(context));
 		if (!compiler->ExecuteAction(*action)) {
 			os << "emit bc error.";
 			return nullptr;
@@ -57,11 +57,19 @@ void DragonLoader::close() {
 }
 
 bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, raw_ostream& os) {
+	std::vector<Function *> funcs;
+	for (auto &func : module->functions()) {
+		funcs.push_back(&func);
+	}
+
 	std::string buildErr;
 	ee = EngineBuilder (std::move(module)).setErrorStr(&buildErr).setEngineKind(EngineKind::JIT).create();
 	if (ee == nullptr) {
 		os << buildErr;
 		return false;
+	}
+	for (Function *func : funcs) {
+		address[func->getName().str()] = ee->getPointerToFunction(func);
 	}
 	ee->finalizeObject();
 	ee->runStaticConstructorsDestructors(false);
@@ -100,6 +108,5 @@ DragonLoader* DragonLoader::registeMethod(const char *methodName) {
 }
 
 void *DragonLoader::getNamedFunction(const char *name) {
-	void *address = ee->getPointerToNamedFunction(name);
-	return address;
+	return address[name];
 }
