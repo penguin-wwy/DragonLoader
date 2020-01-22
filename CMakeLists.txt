@@ -17,7 +17,7 @@ message(${CLANG_INSTALL_PREFIX}/lib)
 include_directories(${LLVM_INCLUDE_DIRS})
 llvm_map_components_to_libnames(llvm_libs x86disassembler x86asmparser x86codegen globalisel
         selectiondag asmprinter codegen scalaropts instcombine aggressiveinstcombine
-        transformutils bitwriter x86desc mcdisassembler x86info x86asmprinter
+        transformutils bitwriter x86desc mcdisassembler x86info
         x86utils mcjit executionengine target analysis profiledata runtimedyld
         object mcparser bitreader mc debuginfocodeview debuginfomsf core binaryformat
         support demangle irreader aarch64codegen amdgpucodegen armcodegen bpfcodegen
