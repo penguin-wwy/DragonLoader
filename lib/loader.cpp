@@ -7,6 +7,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/Demangle/Demangle.h"
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/CodeGen/CodeGenAction.h"
@@ -69,7 +70,9 @@ bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, ra
 		return false;
 	}
 	for (Function *func : funcs) {
-		address[func->getName().str()] = ee->getPointerToFunction(func);
+		std::string name = demangle(func->getName().str());
+		name.erase(std::remove(name.begin(), name.end(), ' '), name.end());
+		address[name] = ee->getPointerToFunction(func);
 	}
 	ee->finalizeObject();
 	ee->runStaticConstructorsDestructors(false);
@@ -108,5 +111,11 @@ DragonLoader* DragonLoader::registeMethod(const char *methodName) {
 }
 
 void *DragonLoader::getNamedFunction(const char *name) {
+	std::string funcName(name);
+	funcName.erase(std::remove(funcName.begin(), funcName.end(), ' '), funcName.end());
+	return address[funcName];
+}
+
+void *DragonLoader::getNamedCFunction(const char *name) {
 	return address[name];
 }

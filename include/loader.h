@@ -36,6 +36,8 @@ public:
 
 	void *getNamedFunction(const char *);
 
+	void *getNamedCFunction(const char *);
+
 private:
 	bool createExecutionEngin(std::unique_ptr<llvm::Module>, llvm::raw_ostream &);
 };

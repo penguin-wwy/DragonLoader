@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadSourceFile(argv[2], errInfo);
-	auto func = reinterpret_cast<fibonacci>(loader.getNamedFunction("fibfunction"));
+	auto func = reinterpret_cast<fibonacci>(loader.getNamedCFunction("fibfunction"));
 	if (func == nullptr) {
 		std::cout << "Get function address failed." << std::endl;
 		return 0;

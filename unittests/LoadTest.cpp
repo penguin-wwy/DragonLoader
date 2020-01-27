@@ -6,7 +6,6 @@
 #include <fstream>
 
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/IR/BasicBlock.h"
@@ -84,7 +83,7 @@ TEST(loader, Test2) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadBitcodeFile(fileName, errInfo);
-	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedFunction("addFunc"));
+	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedCFunction("addFunc"));
 	EXPECT_EQ(3, addFunc(1, 2));
 }
 
@@ -102,7 +101,7 @@ TEST(sourceLoader, Test3) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadSourceFile(fileName, errInfo);
-	AddFuncType addFunc = reinterpret_cast<AddFuncType >(loader.getNamedFunction("addFunc"));
+	AddFuncType addFunc = reinterpret_cast<AddFuncType >(loader.getNamedCFunction("addFunc"));
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));
 }
