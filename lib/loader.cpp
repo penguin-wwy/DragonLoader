@@ -60,7 +60,7 @@ void DragonLoader::close() {
 bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, raw_ostream& os) {
 	std::vector<Function *> funcs;
 	for (auto &func : module->functions()) {
-		funcs.push_back(&func);
+		funcs.emplace_back(&func);
 	}
 
 	std::string buildErr;
@@ -80,14 +80,21 @@ bool DragonLoader::createExecutionEngin(std::unique_ptr<llvm::Module> module, ra
 }
 
 DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::string &err) {
+	std::vector<const char *> argv = { filePath };
+	return loadSourceFile(nullptr, argv, err);
+}
+
+DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::vector<const char *> &argv, std::string &err) {
 	raw_string_ostream os(err);
 	if (compiler == nullptr) {
 		compiler = new CompilerEngin();
 	}
 
-	std::vector<const char *> args;
-	args.push_back(filePath);
-	ArrayRef<const char *> argList(args);
+	if (filePath != nullptr) {
+		argv.emplace_back(filePath);
+	}
+
+	ArrayRef<const char *> argList(argv);
 	std::unique_ptr<llvm::Module> module = compiler->compileModule(argList, context, os);
 	if (module == nullptr) {
 		return nullptr;
@@ -106,9 +113,10 @@ DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, std::string &e
 	return createExecutionEngin(std::move(module), os) ? this : nullptr;
 }
 
-DragonLoader* DragonLoader::registeMethod(const char *methodName) {
-	// build cache
-}
+//DragonLoader* DragonLoader::registeMethod(const char *methodName) {
+//	 build cache
+//	return this;
+//}
 
 void *DragonLoader::getNamedFunction(const char *name) {
 	std::string funcName(name);

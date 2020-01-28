@@ -105,3 +105,17 @@ TEST(sourceLoader, Test3) {
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));
 }
+
+TEST(CXXLoader, Test4) {
+	const char *fileName = "/tmp/AddFunc.cc";
+	std::ofstream tmpFile;
+	tmpFile.open(fileName);
+	tmpFile << addFuncSource;
+	tmpFile.close();
+	DragonLoader loader;
+	std::string errInfo;
+	loader.loadSourceFile(fileName, errInfo);
+	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedFunction("addFunc(int, int)"));
+	ASSERT_TRUE(addFunc != nullptr);
+	EXPECT_EQ(3, addFunc(1, 2));
+}

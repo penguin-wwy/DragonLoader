@@ -7,6 +7,7 @@
 
 #include <bits/unique_ptr.h>
 #include <unordered_map>
+#include <vector>
 
 namespace llvm {
 	class LLVMContext;
@@ -30,9 +31,11 @@ public:
 
 	DragonLoader *loadSourceFile(const char *, std::string &);
 
+	DragonLoader *loadSourceFile(const char *, std::vector<const char *> &, std::string &);
+
 	DragonLoader *loadBitcodeFile(const char *, std::string &);
 
-	DragonLoader *registeMethod(const char *);
+//	DragonLoader *registeMethod(const char *);
 
 	void *getNamedFunction(const char *);
 
