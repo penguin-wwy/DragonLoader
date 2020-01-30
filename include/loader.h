@@ -35,6 +35,10 @@ public:
 
 	DragonLoader *loadBitcodeFile(const char *, std::string &);
 
+	DragonLoader *appendSharedLibrary(const char *, std::string &);
+
+	DragonLoader *appendExtraArchive(const char *archive, std::string &err);
+
 //	DragonLoader *registeMethod(const char *);
 
 	void *getNamedFunction(const char *);

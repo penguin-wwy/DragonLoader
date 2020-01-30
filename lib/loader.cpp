@@ -5,9 +5,12 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/Demangle/Demangle.h"
+#include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/Archive.h"
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/CodeGen/CodeGenAction.h"
@@ -111,6 +114,48 @@ DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, std::string &e
 		return nullptr;
 	}
 	return createExecutionEngin(std::move(module), os) ? this : nullptr;
+}
+
+DragonLoader *DragonLoader::appendSharedLibrary(const char *sharedLibrary, std::string &err) {
+	raw_string_ostream os(err);
+	if (ee == nullptr) {
+		os << "Can't find loaded source file or bitcode file.";
+		return nullptr;
+	}
+
+	Expected<object::OwningBinary<object::ObjectFile>> obj = object::ObjectFile::createObjectFile(sharedLibrary);
+	if (!obj) {
+		os << "Get shared library " << sharedLibrary << "failed.";
+		return nullptr;
+	}
+
+	object::OwningBinary<object::ObjectFile> &file = obj.get();
+	ee->addObjectFile(std::move(file));
+	return this;
+}
+
+DragonLoader* DragonLoader::appendExtraArchive(const char *archive, std::string &err) {
+	raw_string_ostream os(err);
+	if (ee == nullptr) {
+		os << "Can't find loaded source file or bitcode file.";
+		return nullptr;
+	}
+
+	ErrorOr<std::unique_ptr<MemoryBuffer>> archBufOrErr = MemoryBuffer::getFileOrSTDIN(archive);
+	if (!archBufOrErr) {
+		os << "Get extra archive error code: " << archBufOrErr.getError().value();
+		return nullptr;
+	}
+
+	Expected<std::unique_ptr<object::Archive>> archOrErr = object::Archive::create(archBufOrErr.get()->getMemBufferRef());
+	if (!archOrErr) {
+		os << archOrErr.takeError();
+		return nullptr;
+	}
+
+	object::OwningBinary<object::Archive> oa(std::move(archOrErr.get()), std::move(archBufOrErr.get()));
+	ee->addArchive(std::move(oa));
+	return this;
 }
 
 //DragonLoader* DragonLoader::registeMethod(const char *methodName) {
