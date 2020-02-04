@@ -41,12 +41,34 @@ struct CompilerEngin {
 		if (!compiler->hasDiagnostics()) {
 			os << "create diagnostics error.";
 		}
-		std::unique_ptr<CodeGenAction> action(make_unique<EmitLLVMOnlyAction>(context));
+		std::unique_ptr<CodeGenAction> action = createCodeGenAction(DragonLoader::LL, context);
 		if (!compiler->ExecuteAction(*action)) {
 			os << "emit bc error.";
 			return nullptr;
 		}
 		return std::move(action->takeModule());
+	}
+
+	bool compile(ArrayRef<const char *> &args, DragonLoader::EmitType type, LLVMContext *context, raw_ostream &os) {
+		CompilerInvocation::CreateFromArgs(compiler->getInvocation(), args.begin(), args.end(), diagEngine);
+		compiler->createDiagnostics();
+		if (!compiler->hasDiagnostics()) {
+			os << "create diagnostics error.";
+			return false;
+		}
+		std::unique_ptr<CodeGenAction> action = createCodeGenAction(type, context);
+		return compiler->ExecuteAction(*action);
+	}
+
+	static std::unique_ptr<CodeGenAction> createCodeGenAction(DragonLoader::EmitType type, LLVMContext *context) {
+		switch (type) {
+			case DragonLoader::BC:
+				return make_unique<EmitBCAction>(context);
+			case DragonLoader::LL:
+				return make_unique<EmitLLVMOnlyAction>(context);
+			case DragonLoader::OBJ:
+				return make_unique<EmitObjAction>(context);
+		}
 	}
 };
 
@@ -171,4 +193,19 @@ void *DragonLoader::getNamedFunction(const char *name) {
 
 void *DragonLoader::getNamedCFunction(const char *name) {
 	return address[name];
+}
+
+bool DragonLoader::compileSource(DragonLoader *dragonLoader, DragonLoader::EmitType emitType, const char *filePath,
+		std::vector<const char *> &argv, std::string &err) {
+	raw_string_ostream os(err);
+	if (dragonLoader->compiler == nullptr) {
+		dragonLoader->compiler = new CompilerEngin();
+	}
+
+	if (filePath != nullptr) {
+		argv.emplace_back(filePath);
+	}
+
+	ArrayRef<const char *> argList(argv);
+	return dragonLoader->compiler->compile(argList, emitType, nullptr, os);
 }

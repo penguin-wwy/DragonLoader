@@ -17,6 +17,13 @@ namespace llvm {
 }
 class CompilerEngin;
 class DragonLoader {
+public:
+	enum EmitType {
+		BC,
+		LL,
+		OBJ
+	};
+
 private:
 	llvm::LLVMContext *context = nullptr;
 	llvm::ExecutionEngine *ee = nullptr;
@@ -44,6 +51,8 @@ public:
 	void *getNamedFunction(const char *);
 
 	void *getNamedCFunction(const char *);
+
+	static bool compileSource(DragonLoader *, EmitType, const char *, std::vector<const char *> &, std::string &);
 
 private:
 	bool createExecutionEngin(std::unique_ptr<llvm::Module>, llvm::raw_ostream &);
