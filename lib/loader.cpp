@@ -96,13 +96,13 @@ void DragonLoader::finalizeLoad() {
 	if (ee == nullptr) {
 		return;
 	}
+	ee->finalizeObject();
+	ee->runStaticConstructorsDestructors(false);
 	for (Function *func : functions) {
 		std::string name = demangle(func->getName().str());
 		name.erase(std::remove(name.begin(), name.end(), ' '), name.end());
 		address[name] = ee->getPointerToFunction(func);
 	}
-	ee->finalizeObject();
-	ee->runStaticConstructorsDestructors(false);
 }
 
 DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::string &err) {
@@ -126,7 +126,7 @@ DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::vector<con
 		return nullptr;
 	}
 	for (auto &func : module->functions()) {
-		if (func.isDeclaration()) {
+		if (!func.isDeclaration()) {
 			functions.emplace_back(&func);
 		}
 	}
@@ -142,7 +142,7 @@ DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, std::string &e
 		return nullptr;
 	}
 	for (auto &func : module->functions()) {
-		if (func.isDeclaration()) {
+		if (!func.isDeclaration()) {
 			functions.emplace_back(&func);
 		}
 	}
