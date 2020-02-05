@@ -12,6 +12,7 @@
 namespace llvm {
 	class LLVMContext;
 	class Module;
+	class Function;
 	class ExecutionEngine;
 	class raw_ostream;
 }
@@ -29,12 +30,17 @@ private:
 	llvm::ExecutionEngine *ee = nullptr;
 	CompilerEngin *compiler = nullptr;
 
+	std::vector<llvm::Function *> functions;
 	std::unordered_map<std::string, void *> address;
 
 public:
 	DragonLoader();
 
 	void close();
+
+	void resetCompiler();
+
+	void finalizeLoad();
 
 	DragonLoader *loadSourceFile(const char *, std::string &);
 
