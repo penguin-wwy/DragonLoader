@@ -112,9 +112,7 @@ DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::string &er
 
 DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::vector<const char *> &argv, std::string &err) {
 	raw_string_ostream os(err);
-	if (compiler == nullptr) {
-		compiler = new CompilerEngin();
-	}
+	resetCompiler();
 
 	if (filePath != nullptr) {
 		argv.emplace_back(filePath);
@@ -129,6 +127,10 @@ DragonLoader* DragonLoader::loadSourceFile(const char *filePath, std::vector<con
 		if (!func.isDeclaration()) {
 			functions.emplace_back(&func);
 		}
+	}
+	if (ee != nullptr) {
+		ee->addModule(std::move(module));
+		return this;
 	}
 	return createExecutionEngin(std::move(module), os) ? this : nullptr;
 }
@@ -145,6 +147,10 @@ DragonLoader* DragonLoader::loadBitcodeFile(const char *filePath, std::string &e
 		if (!func.isDeclaration()) {
 			functions.emplace_back(&func);
 		}
+	}
+	if (ee != nullptr) {
+		ee->addModule(std::move(module));
+		return this;
 	}
 	return createExecutionEngin(std::move(module), os) ? this : nullptr;
 }

@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
 	std::string errInfo;
 	std::vector<const char *> argList = { argv[4] };
 	loader.loadSourceFile(argv[3], argList, errInfo);
+	loader.finalizeLoad();
 	auto func = reinterpret_cast<AddOpFunc>(loader.getNamedFunction("addOpFunc(int, int)"));
 	if (func == nullptr) {
 		std::cout << "Get function address failed." << std::endl;

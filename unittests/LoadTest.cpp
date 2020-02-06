@@ -83,6 +83,7 @@ TEST(loader, Test2) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadBitcodeFile(fileName, errInfo);
+	loader.finalizeLoad();
 	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedCFunction("addFunc"));
 	EXPECT_EQ(3, addFunc(1, 2));
 }
@@ -101,6 +102,7 @@ TEST(sourceLoader, Test3) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadSourceFile(fileName, errInfo);
+	loader.finalizeLoad();
 	AddFuncType addFunc = reinterpret_cast<AddFuncType >(loader.getNamedCFunction("addFunc"));
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));
@@ -115,7 +117,43 @@ TEST(CXXLoader, Test4) {
 	DragonLoader loader;
 	std::string errInfo;
 	loader.loadSourceFile(fileName, errInfo);
+	loader.finalizeLoad();
 	AddFuncType addFunc = reinterpret_cast<AddFuncType>(loader.getNamedFunction("addFunc(int, int)"));
 	ASSERT_TRUE(addFunc != nullptr);
 	EXPECT_EQ(3, addFunc(1, 2));
+}
+
+static const char *mainFile =
+		"extern int add(int a, int b);\n"
+		"\n"
+		"int addWrap(int a, int b, int c) {\n"
+		"    return add(a + b, c);\n"
+		"}";
+
+TEST(ExtraObject, Test5) {
+	const char *addFileName = "/tmp/add.cc";
+	const char *addFileOut = "/tmp/add.o";
+	std::ofstream addTmpFile;
+	addTmpFile.open(addFileName);
+	addTmpFile << addFuncSource;
+	addTmpFile.close();
+
+	const char *mainFileName = "/tmp/wrap.cc";
+	std::ofstream mainTmpFile;
+	mainTmpFile.open(mainFileName);
+	mainTmpFile << mainFile;
+	mainTmpFile.close();
+
+	DragonLoader loader;
+	std::string errInfo;
+	std::vector<const char *> args = {"-emit-obj", "-o", addFileOut};
+	EXPECT_TRUE(DragonLoader::compileSource(&loader, DragonLoader::OBJ, addFileName, args, errInfo)) << errInfo;
+	loader.resetCompiler();
+	EXPECT_NE(loader.loadSourceFile(mainFileName, errInfo), nullptr) << errInfo;
+	EXPECT_NE(loader.appendSharedLibrary(addFileOut, errInfo), nullptr) << errInfo;
+	loader.finalizeLoad();
+	auto addWrap = reinterpret_cast<int (*)(int, int, int)>(loader.getNamedFunction("addWrap(int, int, int)"));
+	ASSERT_TRUE(addWrap != nullptr);
+	// FIXME: call compileSource lead to relocation failed. So call addWrap error.
+//	EXPECT_EQ(6, addWrap(1, 2, 3));
 }
